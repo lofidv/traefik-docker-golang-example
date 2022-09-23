@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+    reverse-proxy:
+      image: traefik:v2.8
+      command: --api.insecure=true --providers.docker
+      ports:
+        - "8000:80"
+        - "8082:8080"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    auth:
+      container_name: auth
+      restart: always
+      build:
+        context: ./auth
+        dockerfile: Dockerfile
+      ports:
+        - "8050:8050"
+      labels:
+        - "traefik.http.routers.auth.rule=PathPrefix(`/api/v1/auth`)"
+      command: /run
+      volumes:
+        - ./auth:/app
+    storage:
+      container_name: storage
+      restart: always
+      build:
+        context: ./storage
+        dockerfile: Dockerfile
+      ports:
+        - "8060:8060"
+      labels:
+        - "traefik.http.routers.storage.rule=PathPrefix(`/api/v1/storage`)"
+      command: /run
+      volumes:
+        - ./storage:/app
